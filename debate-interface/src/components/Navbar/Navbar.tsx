@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 function Navbar({ id }: any) {
   const Navlist = [
     { title: "בית", link: "" },
+    { title: "מושן חדש", link: "/CreateNew" },
     { title: "ראש הממשלה", link: `/Speech/PM/${id}` },
     { title: 'יו"ר האופוזיציה', link: `/Speech/LO/${id}` },
     { title: "סגן ראש הממשלה", link: `/Speech/DPM/${id}` },

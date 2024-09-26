@@ -1,0 +1,31 @@
+body {
+  direction: rtl; /* Set the entire body to RTL */
+}
+
+.container {
+  display: flex;
+  justify-content: space-between; /* Space between the left and right columns */
+  padding: 20px;
+}
+
+.column {
+  width: 45%; /* Adjust width as needed */
+}
+
+.group {
+  margin-bottom: 20px; /* Space between each group */
+  border: 1px solid #ccc; /* Optional border for visual separation */
+  padding: 10px; /* Padding for content */
+  border-radius: 5px; /* Optional rounded corners */
+  background-color: #f9f9f9; /* Light background for groups */
+}
+
+h2,
+h3,
+p {
+  color: black; /* Set text color to black */
+}
+
+h2 {
+  margin-top: 0; /* Remove top margin for headings */
+}
