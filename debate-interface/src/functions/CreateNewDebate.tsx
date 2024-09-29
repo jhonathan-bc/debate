@@ -5,7 +5,7 @@ export const CreateNewDebate = async (
   debateEntry: Omit<Debate, "id">
 ): Promise<Debate | undefined> => {
   try {
-    const response = await fetch("http://localhost:8000/debates", {
+    const response = await fetch("https://debate-data.onrender.com/debates", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

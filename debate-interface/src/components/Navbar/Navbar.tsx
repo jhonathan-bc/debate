@@ -1,18 +1,10 @@
 import "./Navbar.css";
 import { Link } from "react-router-dom";
 
-function Navbar({ id }: any) {
+function Navbar() {
   const Navlist = [
     { title: "בית", link: "" },
     { title: "מושן חדש", link: "/CreateNew" },
-    { title: "ראש הממשלה", link: `/Speech/PM/${id}` },
-    { title: 'יו"ר האופוזיציה', link: `/Speech/LO/${id}` },
-    { title: "סגן ראש הממשלה", link: `/Speech/DPM/${id}` },
-    { title: 'סגן יו"ר האופוזיציה', link: `/Speech/DLO/${id}` },
-    { title: "מרחיב הממשלה", link: `/Speech/MG/${id}` },
-    { title: "מרחיב האופוזיציה", link: `/Speech/MO/${id}` },
-    { title: "מסכם הממשלה", link: `/Speech/GW/${id}` },
-    { title: "מסכם האופוזיציה", link: `/Speech/OW/${id}` },
   ];
   return (
     <>

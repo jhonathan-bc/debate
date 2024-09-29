@@ -1,32 +1,66 @@
 import { useState, useEffect } from "react";
 import useFetchDebateData from "../../functions/useFetchDebateData";
 import "./Home.css";
+import { Debate } from "../../functions/types";
 
-interface Speech {
-  speech: string;
-  rebuttal: string;
-  POI: string;
+const formatText = (text: string) => {
+  if (!text) return "Speech not available";
+
+  const parts = text.split(/(\*.*?\*|\$.*?\$)/g);
+
+  return parts.map((part, index) => {
+    if (!part) return null;
+
+    if (part.startsWith("*") && part.endsWith("*")) {
+      return (
+        <span key={index} style={{ fontWeight: "bold", color: "red" }}>
+          {part.slice(1, -1)}
+        </span>
+      );
+    } else if (part.startsWith("$") && part.endsWith("$")) {
+      return (
+        <span key={index} style={{ color: "blue", fontWeight: "bold" }}>
+          {part.slice(1, -1)}
+        </span>
+      );
+    }
+    return part;
+  });
+};
+
+interface DebateGroupProps {
+  title: string;
+  speakers: any[];
 }
 
-interface Debate {
-  motion: string;
-  PM: Speech;
-  DPM: Speech;
-  LO: Speech;
-  DLO: Speech;
-  MG: Speech;
-  GW: Speech;
-  MO: Speech;
-  OW: Speech;
-  id: string;
-}
+const DebateGroup: React.FC<DebateGroupProps> = ({ title, speakers }) => (
+  <div className="group">
+    <h2>{title}</h2>
+    {speakers.map((speaker, index) => (
+      <div key={index}>
+        <h2>{speaker.title}</h2>
+        <h3>טיעוני {speaker.title}</h3>
+        <p>{formatText(speaker.speech)}</p>
+        {speaker.rebuttal && (
+          <>
+            <h3>ריבטל {speaker.title}:</h3>
+            <p>{formatText(speaker.rebuttal)}</p>
+          </>
+        )}
+
+        <h3>POI:</h3>
+        <p>{formatText(speaker.POI)}</p>
+      </div>
+    ))}
+  </div>
+);
 
 const Home = () => {
   const [motions, setMotions] = useState<Debate[]>([]);
   const [selectedMotionId, setSelectedMotionId] = useState<string | null>(null);
 
   const { data, loading, error } = useFetchDebateData(
-    "http://localhost:8000/debates"
+    "https://debate-data.onrender.com/debates"
   );
 
   useEffect(() => {
@@ -42,15 +76,65 @@ const Home = () => {
     (motion) => motion.id === selectedMotionId
   );
 
+  const handleDelete = async (id: string | null) => {
+    if (!id) return;
+
+    try {
+      const response = await fetch(
+        `https://debate-data.onrender.com/debates/${id}`,
+        { method: "DELETE" }
+      );
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      console.log(`Deleted debate with ID: ${id}`);
+      setMotions(motions.filter((motion) => motion.id !== id)); // Refresh motions
+    } catch (error) {
+      console.error("Error deleting debate:", error);
+    }
+  };
+
+  const downloadData = async (
+    url: string | URL | Request,
+    fileName: string
+  ) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+
+      const urlBlob = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = urlBlob;
+      link.download = fileName;
+
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(urlBlob);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
   return (
     <div>
-      <h1>Select a Debate Motion</h1>
+      <h1>בחר/י מושן</h1>
       <select
         onChange={(e) => setSelectedMotionId(e.target.value)}
         value={selectedMotionId || ""}
       >
         <option value="" disabled>
-          Select a motion
+          בחר/י מושן
         </option>
         {motions.map((motion) => (
           <option key={motion.id} value={motion.id}>
@@ -58,75 +142,92 @@ const Home = () => {
           </option>
         ))}
       </select>
+      <div>
+        <button onClick={() => handleDelete(selectedMotionId)}>
+          מחק/י מושן
+        </button>
+        <button
+          onClick={() =>
+            downloadData("https://debate-data.onrender.com/debates", "db.json")
+          }
+        >
+          שמור מידע
+        </button>
+      </div>
 
       {selectedMotion && (
         <div className="container">
           <div className="column">
-            {/* OG Group (PM and DPM) */}
-            <div className="group">
-              <h2>ממשלה ראשונה</h2>
-              <h3>טיעוני רוה"מ:</h3>
-              <p>{selectedMotion.PM?.speech || "Speech not available"}</p>
-              <h3>POI:</h3>
-              <p>{selectedMotion.PM?.POI || "POI not available"}</p>
-              <h3>טיעוני סגן רוה"מ:</h3>
-              <p>{selectedMotion.DPM?.speech || "Speech not available"}</p>
-              <h3>ריבטל סגן רוה"מ:</h3>
-              <p>{selectedMotion.DPM?.rebuttal || "rebuttal not available"}</p>
-              <h3>POI:</h3>
-              <p>{selectedMotion.DPM?.POI || "POI not available"}</p>
-            </div>
-
-            {/* CG Group (MG and GW) */}
-            <div className="group">
-              <h2>ממשלה שנייה</h2>
-              <h3>טיעוני מרחיב ממשלה:</h3>
-              <p>{selectedMotion.MG?.speech || "Speech not available"}</p>
-              <h3>ריבטל מרחיב ממשלה:</h3>
-              <p>{selectedMotion.MG?.rebuttal || "rebuttal not available"}</p>
-              <h3>POI:</h3>
-              <p>{selectedMotion.MG?.POI || "POI not available"}</p>
-              <h3>טיעוני מסכם ממשלה:</h3>
-              <p>{selectedMotion.GW?.speech || "Speech not available"}</p>
-              <h3>ריבטל מסכם ממשלה:</h3>
-              <p>{selectedMotion.GW?.rebuttal || "rebuttal not available"}</p>
-              <h3>POI:</h3>
-              <p>{selectedMotion.GW?.POI || "POI not available"}</p>
-            </div>
+            <DebateGroup
+              title="ממשלה ראשונה"
+              speakers={[
+                {
+                  title: 'רוה"מ',
+                  speech: selectedMotion.PM?.speech,
+                  POI: selectedMotion.PM?.POI,
+                },
+                {
+                  title: 'סגן רוה"מ',
+                  speech: selectedMotion.DPM?.speech,
+                  POI: selectedMotion.DPM?.POI,
+                  rebuttal: selectedMotion.DPM?.rebuttal,
+                },
+              ]}
+            />
+            <DebateGroup
+              title="ממשלה שנייה"
+              speakers={[
+                {
+                  title: "מרחיב ממשלה",
+                  speech: selectedMotion.MG?.speech,
+                  POI: selectedMotion.MG?.POI,
+                  rebuttal: selectedMotion.MG?.rebuttal,
+                },
+                {
+                  title: "מסכם ממשלה",
+                  speech: selectedMotion.GW?.speech,
+                  rebuttal: selectedMotion.GW?.rebuttal,
+                  POI: selectedMotion.GW?.POI,
+                },
+              ]}
+            />
           </div>
 
           <div className="column">
-            {/* OG Group (LO and DLO) */}
-            <div className="group">
-              <h2>אופוזיציה ראשונה</h2>
-              <h3>טיעוני יו"ר האופוזיציה:</h3>
-              <p>{selectedMotion.LO?.speech || "Speech not available"}</p>
-              <h3>POI:</h3>
-              <p>{selectedMotion.LO?.POI || "POI not available"}</p>
-              <h3>טיעוני סגן יו"ר האופוזיציה:</h3>
-              <p>{selectedMotion.DLO?.speech || "Speech not available"}</p>
-              <h3>ריבטל סגן יו"ר האופוזיציה:</h3>
-              <p>{selectedMotion.DLO?.rebuttal || "rebuttal not available"}</p>
-              <h3>POI:</h3>
-              <p>{selectedMotion.DLO?.POI || "POI not available"}</p>
-            </div>
-
-            {/* CG Group (MO and OW) */}
-            <div className="group">
-              <h2>אופוזיציה שנייה</h2>
-              <h3>טיעוני מרחיב אופוזיציה:</h3>
-              <p>{selectedMotion.MO?.speech || "Speech not available"}</p>
-              <h3>ריבטל מרחיב אופוזיציה:</h3>
-              <p>{selectedMotion.MO?.rebuttal || "rebuttal not available"}</p>
-              <h3>POI:</h3>
-              <p>{selectedMotion.MO?.POI || "POI not available"}</p>
-              <h3>טיעוני מסכם אופוזיציה:</h3>
-              <p>{selectedMotion.OW?.speech || "Speech not available"}</p>
-              <h3>ריבטל מסכם אופוזיציה:</h3>
-              <p>{selectedMotion.OW?.rebuttal || "rebuttal not available"}</p>
-              <h3>POI:</h3>
-              <p>{selectedMotion.OW?.POI || "POI not available"}</p>
-            </div>
+            <DebateGroup
+              title="אופוזיציה ראשונה"
+              speakers={[
+                {
+                  title: 'יו"ר האופוזיציה',
+                  speech: selectedMotion.LO?.speech,
+                  rebuttal: selectedMotion.LO?.rebuttal,
+                  POI: selectedMotion.LO?.POI,
+                },
+                {
+                  title: 'סגן יו"ר האופוזיציה',
+                  speech: selectedMotion.DLO?.speech,
+                  rebuttal: selectedMotion.DLO?.rebuttal,
+                  POI: selectedMotion.DLO?.POI,
+                },
+              ]}
+            />
+            <DebateGroup
+              title="אופוזיציה שנייה"
+              speakers={[
+                {
+                  title: "מרחיב אופוזיציה",
+                  speech: selectedMotion.MO?.speech,
+                  rebuttal: selectedMotion.MO?.rebuttal,
+                  POI: selectedMotion.MO?.POI,
+                },
+                {
+                  title: "מסכם אופוזיציה",
+                  speech: selectedMotion.OW?.speech,
+                  rebuttal: selectedMotion.OW?.rebuttal,
+                  POI: selectedMotion.OW?.POI,
+                },
+              ]}
+            />
           </div>
         </div>
       )}

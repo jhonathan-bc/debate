@@ -1,3 +1,4 @@
+import "./Speech.css";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Debate, SpeakerRole } from "../../functions/types"; // Adjust the import path
@@ -13,7 +14,6 @@ const Speech = () => {
   const [speech, setSpeech] = useState<string>("");
   const [rebuttal, setRebuttal] = useState<string>("");
   const [POI, setPOI] = useState<string>("");
-  const [motion, setMotion] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
 
@@ -32,13 +32,14 @@ const Speech = () => {
   useEffect(() => {
     const fetchDebate = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/debates/${id}`);
+        const response = await fetch(
+          `https://debate-data.onrender.com/debates/${id}`
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch debate data");
         }
         const debate: Debate = await response.json();
         if (debate) {
-          setMotion(debate.motion);
           setSpeech(debate[speaker]?.speech || "");
           setRebuttal(debate[speaker]?.rebuttal || "");
           setPOI(debate[speaker]?.POI || "");
@@ -65,10 +66,10 @@ const Speech = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!speech.trim() || !rebuttal.trim() || !POI.trim()) {
-      alert("Please fill in all fields");
-      return;
-    }
+    // if (!speech.trim() || !rebuttal.trim() || !POI.trim()) {
+    //   alert("Please fill in all fields");
+    //   return;
+    // }
 
     if (!id) {
       return; // Handle the case where id is not available
@@ -76,7 +77,9 @@ const Speech = () => {
 
     try {
       // First, fetch the existing debate data
-      const response = await fetch(`http://localhost:8000/debates/${id}`);
+      const response = await fetch(
+        `https://debate-data.onrender.com/debates/${id}`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch existing debate data");
       }
@@ -122,7 +125,7 @@ const Speech = () => {
 
       // Now send the updated object back to the server
       const updateResponse = await fetch(
-        `http://localhost:8000/debates/${id}`,
+        `https://debate-data.onrender.com/debates/${id}`,
         {
           method: "PUT",
           headers: {
@@ -185,17 +188,19 @@ const Speech = () => {
           <textarea
             value={speech}
             onChange={(e) => setSpeech(e.target.value)}
-            rows={4}
+            rows={6}
           />
         </div>
-        <div>
-          <label>ריבטל:</label>
-          <textarea
-            value={rebuttal}
-            onChange={(e) => setRebuttal(e.target.value)}
-            rows={4}
-          />
-        </div>
+        {!(speaker == "PM") && (
+          <div>
+            <label>ריבטל:</label>
+            <textarea
+              value={rebuttal}
+              onChange={(e) => setRebuttal(e.target.value)}
+              rows={6}
+            />
+          </div>
+        )}
         <div>
           <label>POI:</label>
           <textarea

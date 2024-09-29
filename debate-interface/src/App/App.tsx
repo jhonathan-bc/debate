@@ -12,6 +12,7 @@ function App() {
   return (
     <>
       <Navbar />
+      <div className="main-content"></div>
       <Routes>
         <Route path="/" Component={Home} />
         <Route path="/Home/:id" Component={Home} />

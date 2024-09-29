@@ -1,23 +1,5 @@
 import { useState, useEffect } from "react";
-
-interface Speech {
-  speech: string;
-  rebuttal: string;
-  POI: string;
-}
-
-interface Debate {
-  motion: string;
-  PM: Speech;
-  LO: Speech;
-  DPM: Speech;
-  DLO: Speech;
-  MG: Speech;
-  MO: Speech;
-  GW: Speech;
-  OW: Speech;
-  id: string;
-}
+import { Debate } from "./types";
 
 const useFetchDebateData = (url: string) => {
   const [data, setData] = useState<Debate | null>(null);

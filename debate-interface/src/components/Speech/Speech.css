@@ -1,0 +1,18 @@
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Space between each textarea */
+}
+
+textarea {
+  width: 100%; /* Make textarea stretch across the container */
+  padding: 10px; /* Add some padding for better text visibility */
+  border: 1px solid #ccc; /* Border for the textarea */
+  border-radius: 4px; /* Rounded corners */
+  resize: none; /* Disable resizing */
+  font-size: 16px; /* Adjust font size for readability */
+}
+
+label {
+  font-weight: bold; /* Make labels stand out */
+}

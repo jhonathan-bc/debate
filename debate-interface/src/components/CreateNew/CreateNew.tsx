@@ -54,9 +54,9 @@ function CreateNew() {
           type="text"
           value={motion}
           onChange={handleSetMotion}
-          placeholder="Enter debate motion"
+          placeholder="הכנס/י מושן"
         />
-        <button type="submit">Create Debate</button>
+        <button type="submit">התחל/י דיבייט</button>
       </form>
       {error && <p style={{ color: "red" }}>{error}</p>}
       {success && (
