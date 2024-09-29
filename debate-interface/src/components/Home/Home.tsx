@@ -39,7 +39,7 @@ const DebateGroup: React.FC<DebateGroupProps> = ({ title, speakers }) => (
     {speakers.map((speaker, index) => (
       <div key={index}>
         <h2>{speaker.title}</h2>
-        <h3>טיעוני {speaker.title}</h3>
+        <h3>טיעוני {speaker.title}:</h3>
         <p>{formatText(speaker.speech)}</p>
         {speaker.rebuttal && (
           <>
