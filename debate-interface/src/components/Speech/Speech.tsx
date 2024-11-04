@@ -31,14 +31,15 @@ const Speech = () => {
 
   useEffect(() => {
     const fetchDebate = async () => {
+      if (!id) {
+        setError("Debate ID is not available."); // Set an error message
+        return; // Handle the case where id is not available
+      }
       try {
-        const response = await fetch(
-          `https://debate-data.onrender.com/debates/${id}`
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch debate data");
-        }
-        const debate: Debate = await response.json();
+        // Use electronAPI to fetch the debate
+        const debate: Debate | { error: string } =
+          await window.electronAPI.readDebate(id);
+
         if (debate) {
           setSpeech(debate[speaker]?.speech || "");
           setRebuttal(debate[speaker]?.rebuttal || "");
@@ -66,24 +67,14 @@ const Speech = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // if (!speech.trim() || !rebuttal.trim() || !POI.trim()) {
-    //   alert("Please fill in all fields");
-    //   return;
-    // }
-
     if (!id) {
       return; // Handle the case where id is not available
     }
 
     try {
-      // First, fetch the existing debate data
-      const response = await fetch(
-        `https://debate-data.onrender.com/debates/${id}`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch existing debate data");
-      }
-      const existingDebate: Debate = await response.json();
+      // First, fetch the existing debate data using electronAPI
+      const existingDebate: Debate | { error: string } =
+        await window.electronAPI.readDebate(id);
 
       // Create the updated debate object
       const updatedDebate: Debate = {
@@ -123,28 +114,15 @@ const Speech = () => {
         id: id,
       };
 
-      // Now send the updated object back to the server
-      const updateResponse = await fetch(
-        `https://debate-data.onrender.com/debates/${id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updatedDebate),
-        }
-      );
+      // Now send the updated object back to the server using electronAPI
+      await window.electronAPI.updateDebate(id, updatedDebate);
 
-      if (updateResponse.ok) {
-        if (speaker === "OW") {
-          // Navigate to root if speaker is OW
-          navigate("/");
-        } else {
-          navigateToNextSpeaker(speaker, id);
-        }
+      // Navigate after successful update
+      if (speaker === "OW") {
+        // Navigate to root if speaker is OW
+        navigate("/");
       } else {
-        console.error("Failed to update debate entry.");
-        setError("Failed to update debate entry.");
+        navigateToNextSpeaker(speaker, id);
       }
     } catch (error) {
       console.error("Error updating debate entry:", error);
@@ -191,7 +169,7 @@ const Speech = () => {
             rows={6}
           />
         </div>
-        {!(speaker == "PM") && (
+        {!(speaker === "PM") && (
           <div>
             <label>ריבטל:</label>
             <textarea

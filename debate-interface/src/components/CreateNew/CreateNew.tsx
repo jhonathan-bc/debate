@@ -1,6 +1,5 @@
 import { SetStateAction, useState } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
-import { CreateNewDebate } from "../../functions/CreateNewDebate"; // Adjust the import path as needed
 import { Debate } from "../../functions/types"; // Ensure types are imported correctly
 
 function CreateNew() {
@@ -19,7 +18,6 @@ function CreateNew() {
     e.preventDefault();
 
     const newDebate: Omit<Debate, "id"> = {
-      // Use Omit to exclude id
       motion: motion,
       PM: { speech: "", rebuttal: "", POI: "" },
       LO: { speech: "", rebuttal: "", POI: "" },
@@ -29,11 +27,11 @@ function CreateNew() {
       MO: { speech: "", rebuttal: "", POI: "" },
       GW: { speech: "", rebuttal: "", POI: "" },
       OW: { speech: "", rebuttal: "", POI: "" },
-      // No id field here
     };
 
     try {
-      const result = await CreateNewDebate(newDebate);
+      const result = await window.electronAPI.createDebate(newDebate); // result should be of type Debate
+
       if (result && result.id) {
         setSuccess(true);
         setMotion(""); // Clear input on success
@@ -43,6 +41,7 @@ function CreateNew() {
       }
     } catch (error) {
       setError("An error occurred while creating the debate entry.");
+      console.error(error);
     }
   };
 

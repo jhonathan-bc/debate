@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import useFetchDebateData from "../../functions/useFetchDebateData";
 import "./Home.css";
 import { Debate } from "../../functions/types";
+// import { useElectronAPI } from "../../hooks/useElectronAPI"; // Adjust the path if needed
 
 const formatText = (text: string) => {
   if (!text) return "Speech not available";
@@ -30,6 +30,7 @@ const formatText = (text: string) => {
 
 interface DebateGroupProps {
   title: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   speakers: any[];
 }
 
@@ -58,16 +59,25 @@ const DebateGroup: React.FC<DebateGroupProps> = ({ title, speakers }) => (
 const Home = () => {
   const [motions, setMotions] = useState<Debate[]>([]);
   const [selectedMotionId, setSelectedMotionId] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data, loading, error } = useFetchDebateData(
-    "https://debate-data.onrender.com/debates"
-  );
-
+  // Using the electronAPI to fetch debates
   useEffect(() => {
-    if (data) {
-      setMotions(data as unknown as Debate[]);
-    }
-  }, [data]);
+    const fetchDebates = async () => {
+      try {
+        const data = await window.electronAPI.readDebates(); // Fetch data using electronAPI
+        setMotions(data);
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load debates");
+        setLoading(false);
+        console.error(err);
+      }
+    };
+
+    fetchDebates();
+  }, []);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
@@ -80,49 +90,11 @@ const Home = () => {
     if (!id) return;
 
     try {
-      const response = await fetch(
-        `https://debate-data.onrender.com/debates/${id}`,
-        { method: "DELETE" }
-      );
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
+      await window.electronAPI.deleteDebate(id); // Use electronAPI to delete debate
       console.log(`Deleted debate with ID: ${id}`);
       setMotions(motions.filter((motion) => motion.id !== id)); // Refresh motions
     } catch (error) {
       console.error("Error deleting debate:", error);
-    }
-  };
-
-  const downloadData = async (
-    url: string | URL | Request,
-    fileName: string
-  ) => {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: "application/json",
-      });
-
-      const urlBlob = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = urlBlob;
-      link.download = fileName;
-
-      document.body.appendChild(link);
-      link.click();
-
-      document.body.removeChild(link);
-      URL.revokeObjectURL(urlBlob);
-    } catch (error) {
-      console.error("Error fetching data:", error);
     }
   };
 
@@ -145,13 +117,6 @@ const Home = () => {
       <div>
         <button onClick={() => handleDelete(selectedMotionId)}>
           מחק/י מושן
-        </button>
-        <button
-          onClick={() =>
-            downloadData("https://debate-data.onrender.com/debates", "db.json")
-          }
-        >
-          שמור מידע
         </button>
       </div>
 
