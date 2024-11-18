@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "fs/promises";
-import { v4 as uuidv4 } from 'uuid'; // Add this import at the top
+import { v4 as uuidv4 } from "uuid"; // Add this import at the top
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataFilePath = path.join(__dirname, "../src/data/db.json");
@@ -59,64 +59,94 @@ ipcMain.handle("read-debates", async (): Promise<Debate[]> => {
   return data.debates;
 });
 
-ipcMain.handle("read-debate", async (_: IpcMainInvokeEvent, id: string): Promise<Debate | { error: string }> => {
-  try {
-    const data = await readData(); // Read data from JSON file
-    const debate = data.debates.find(debate => debate.id === id); // Find the debate by ID
+ipcMain.handle(
+  "read-debate",
+  async (
+    _: IpcMainInvokeEvent,
+    id: string
+  ): Promise<Debate | { error: string }> => {
+    try {
+      const data = await readData(); // Read data from JSON file
+      const debate = data.debates.find((debate) => debate.id === id); // Find the debate by ID
 
-    if (!debate) {
-      return { error: "Debate not found" }; // Return an error if not found
+      if (!debate) {
+        return { error: "Debate not found" }; // Return an error if not found
+      }
+
+      return debate; // Return the found debate
+    } catch (error) {
+      console.error("Error reading debate:", error);
+      return { error: (error as Error).message }; // Return an error message
     }
-
-    return debate; // Return the found debate
-  } catch (error) {
-    console.error("Error reading debate:", error);
-    return { error: (error as Error).message }; // Return an error message
   }
-});
+);
 
-ipcMain.handle("create-debate", async (_: IpcMainInvokeEvent, newDebate: Omit<Debate, "id">): Promise<Debate> => {
-  try {
-    const data = await readData();
-    const debateWithId: Debate = { ...newDebate, id: uuidv4() }; // Generate a new ID and create full Debate object
-    data.debates.push(debateWithId);
-    await writeData(data);
-    return debateWithId; // Return the newly created debate object including the ID
-  } catch (error) {
-    console.error("Error creating debate:", error);
-    throw new Error((error as Error).message); // Rethrow the error for handling in the renderer
+ipcMain.handle(
+  "create-debate",
+  async (
+    _: IpcMainInvokeEvent,
+    newDebate: Omit<Debate, "id">
+  ): Promise<Debate> => {
+    try {
+      const data = await readData();
+      const debateWithId: Debate = { ...newDebate, id: uuidv4() }; // Generate a new ID and create full Debate object
+      data.debates.push(debateWithId);
+      await writeData(data);
+      return debateWithId; // Return the newly created debate object including the ID
+    } catch (error) {
+      console.error("Error creating debate:", error);
+      throw new Error((error as Error).message); // Rethrow the error for handling in the renderer
+    }
   }
-});
+);
 
-ipcMain.handle("update-debate", async (_: IpcMainInvokeEvent, id: string, updatedDebate: Partial<Debate>): Promise<{ success: boolean; error?: string }> => {
-  try {
-    const data = await readData();
-    const debateIndex = data.debates.findIndex((debate) => debate.id === id);
-    if (debateIndex === -1) return { success: false, error: "Debate not found" };
+ipcMain.handle(
+  "update-debate",
+  async (
+    _: IpcMainInvokeEvent,
+    id: string,
+    updatedDebate: Partial<Debate>
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const data = await readData();
+      const debateIndex = data.debates.findIndex((debate) => debate.id === id);
+      if (debateIndex === -1)
+        return { success: false, error: "Debate not found" };
 
-    data.debates[debateIndex] = { ...data.debates[debateIndex], ...updatedDebate };
-    await writeData(data);
-    return { success: true };
-  } catch (error) {
-    console.error("Error updating debate:", error);
-    return { success: false, error: (error as Error).message };
+      data.debates[debateIndex] = {
+        ...data.debates[debateIndex],
+        ...updatedDebate,
+      };
+      await writeData(data);
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating debate:", error);
+      return { success: false, error: (error as Error).message };
+    }
   }
-});
+);
 
-ipcMain.handle("delete-debate", async (_: IpcMainInvokeEvent, id: string): Promise<{ success: boolean; error?: string }> => {
-  try {
-    const data = await readData();
-    const newDebates = data.debates.filter((debate) => debate.id !== id);
+ipcMain.handle(
+  "delete-debate",
+  async (
+    _: IpcMainInvokeEvent,
+    id: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const data = await readData();
+      const newDebates = data.debates.filter((debate) => debate.id !== id);
 
-    if (data.debates.length === newDebates.length) return { success: false, error: "Debate not found" };
+      if (data.debates.length === newDebates.length)
+        return { success: false, error: "Debate not found" };
 
-    await writeData({ debates: newDebates });
-    return { success: true };
-  } catch (error) {
-    console.error("Error deleting debate:", error);
-    return { success: false, error: (error as Error).message };
+      await writeData({ debates: newDebates });
+      return { success: true };
+    } catch (error) {
+      console.error("Error deleting debate:", error);
+      return { success: false, error: (error as Error).message };
+    }
   }
-});
+);
 
 function createWindow() {
   win = new BrowserWindow({
